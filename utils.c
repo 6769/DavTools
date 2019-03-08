@@ -12,6 +12,11 @@ static const char musage[] = "H-I-K Firmware header converter 0.51R\n\nUsage:\n"
                              "              -c<outputdirs> :create new firmware with rootfs that included all files in sourcedir and  device properties copied from davfile\n\n"
                              "Example:\n> tools -i firmware.dav -l1 -ctestdir -ssplitdir\n"
                              "Compiled: "__TIMESTAMP__", GCC version: "__VERSION__;
+static const unsigned char ida_chars[] =
+        {
+                0xBA, 0xCD, 0xBC, 0xFE, 0xD6, 0xCA, 0xDD, 0xD3, 0xBA, 0xB9,
+                0xA3, 0xAB, 0xBF, 0xCB, 0xB5, 0xBE, 0xFF, 0xFF, 0xFF, 0xFF
+        };
 
 void usage(void) {
     puts(musage);
@@ -24,7 +29,7 @@ void argparse(Options *options, int argc, char *argv[]) {
     int langcode;
 
     options->argc = argc;
-    if(argc<=1){
+    if (argc <= 1) {
         usage();
         exit(1);
     }
@@ -73,8 +78,67 @@ void argparse(Options *options, int argc, char *argv[]) {
 
 }
 
-void hexprint(char* buf, int cnt){
+void hexprint(const char *buf, int cnt, FILE *output) {
+
+    if (cnt < 1) {
+        return;
+    }
+    int line = cnt / LINECNT + 1;
+
+
+    putc('\n', output);
+    for (int linei = 0; linei < line; linei++) {
+        int currentchars = linei == line - 1 ? cnt % LINECNT : LINECNT;
+        fprintf(output, "[%08X]: ", linei);
+        for (int pos = 0; pos < currentchars; ++pos) {
+            unsigned char curc = buf[pos + LINECNT * linei];
+            fprintf(output, "%02X ", curc);
+        }
+        for (int pos = 0; pos < LINECNT - currentchars; ++pos) {
+            fprintf(output, "   ");
+        }
+        fprintf(output, " | ");
+        for (int pos = 0; pos < currentchars; ++pos) {
+            unsigned char curc = buf[pos + LINECNT * linei];
+            if (curc >= 32 && curc <= 127)
+                fprintf(output, "%c", curc);
+            else
+                fprintf(output, ".");
+        }
+        for (int pos = 0; pos < LINECNT - currentchars; ++pos) {
+            fprintf(output, " ");
+        }
+        fprintf(output, "|\n");
+        if (linei + 2 == line && cnt % LINECNT == 0) {
+            break;
+        }
+    }
+}
+
+void decodebuffer(char *dest, char *src, int cnt) {
+    unsigned char i = 0;
+    char key[32];
+
+    memcpy(key, ida_chars, 16u);
+    if (cnt > 0) {
+        do {
+            dest[i] = src[i] ^ key[(i + (i >> 4)) & 0xF];
+            ++i;
+        } while (i != cnt);
+    }
+}
+
+int argcheck(const Options *options){
+    char* targetfile=options->inputfile;
+    if(!fopen(targetfile,"rb")){
+        return false;
+    }
+    return true;
+
 
 }
 
-void decodebuffer(char *dest, char *src, int cnt);
+int split_files(const char* file){
+
+    return true;
+}

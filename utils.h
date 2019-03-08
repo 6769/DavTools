@@ -12,7 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 
-
+#define LINECNT 16
 typedef char* pchar;
 typedef struct _globalopt {
     int argc,lang;
@@ -22,6 +22,7 @@ typedef struct _globalopt {
 } Options;
 
 void argparse(Options* options ,int argc, char *argv[]);
-
+void decodebuffer(char *dest, char *src, int cnt);
+void hexprint(const char* buf, int cnt,FILE* output);
 
 #endif //CLIONTOOLS_UTILS_H
